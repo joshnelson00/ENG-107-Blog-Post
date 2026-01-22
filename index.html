@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breaking Things on Purpose: Why Smart Companies Destroy Their Own Systems</title>
+    <meta name="description" content="A deep dive into the impact that chaos engineering has on systems">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=SF+Pro+Text:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-tertiary: #fbfbfd;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.04);
+            --shadow-medium: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --gradient-subtle: linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .nav-content {
+            max-width: 980px;
+            width: 100%;
+            padding: 0 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 52px;
+            left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 140px 24px 80px;
+            text-align: center;
+            background: var(--gradient-subtle);
+        }
+
+        .hero-eyebrow {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 16px;
+            letter-spacing: 0.02em;
+        }
+
+        .hero-title {
+            font-size: clamp(36px, 6vw, 64px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            max-width: 900px;
+            margin: 0 auto 24px;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(18px, 2.5vw, 22px);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            font-size: 14px;
+            color: var(--text-tertiary);
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hero-image {
+            max-width: 1200px;
+            margin: 60px auto 0;
+            padding: 0 24px;
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Article Container */
+        .article-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        /* Content Section */
+        .content-section {
+            max-width: 75%;
+            margin: 0 auto 80px;
+        }
+
+        .content-section p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .content-section p:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .content-section h2 {
+            font-size: 36px;
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin: 60px 0 28px;
+            color: var(--text-primary);
+        }
+
+        .content-section h2:first-child {
+            margin-top: 0;
+        }
+
+        /* Image Layouts */
+        .image-section {
+            margin: 80px 0;
+        }
+
+        .image-left,
+        .image-right {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin: 80px 0;
+        }
+
+        .image-left .image-wrapper {
+            order: -1;
+        }
+
+        .image-wrapper {
+            position: relative;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .image-wrapper figcaption {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            text-align: center;
+        }
+
+        .image-center {
+            max-width: 75%;
+            margin: 80px auto;
+        }
+
+        .image-center img {
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .image-center figcaption {
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-tertiary);
+            text-align: center;
+        }
+
+        /* Text Content in Image Sections */
+        .text-content h2 {
+            font-size: 32px;
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .text-content p {
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .text-content p:last-of-type {
+            margin-bottom: 0;
+        }
+
+        /* Author Card */
+        .author-card {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 40px;
+            max-width: 75%;
+            margin: 80px auto 0;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+        }
+
+        .author-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+
+        .author-info h4 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .author-info p {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            padding: 48px 24px;
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        .footer p {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        /* Fade In Animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .content-section {
+                max-width: 90%;
+            }
+
+            .image-left,
+            .image-right {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .image-left .image-wrapper {
+                order: 0;
+            }
+
+            .image-center {
+                max-width: 90%;
+            }
+
+            .author-card {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 120px 20px 60px;
+            }
+
+            .hero-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .article-container {
+                padding: 60px 20px;
+            }
+
+            .content-section,
+            .image-center,
+            .author-card {
+                max-width: 100%;
+            }
+
+            .author-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-content">
+            <a href="#" class="nav-logo">TechInsight</a>
+            <div class="nav-links">
+                <a href="#">Articles</a>
+                <a href="#">Categories</a>
+                <a href="#">About</a>
+                <a href="#">Subscribe</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <span class="hero-eyebrow">Engineering Deep Dive</span>
+        <h1 class="hero-title">Breaking Things on Purpose: Why Smart Companies Destroy Their Own Systems</h1>
+        <p class="hero-subtitle">A deep dive into the impact that chaos engineering has on systems</p>
+        <div class="hero-meta">
+            <span>February 8, 2026</span>
+            <span>•</span>
+            <span>14 min read</span>
+            <span>•</span>
+            <span>By Joshua Nelson</span>
+        </div>
+        <div class="hero-image">
+            <img src="/media/monkey-data-center.jpg" loading="eager" alt="Illustration of a monkey in a data center causing chaos">
+        </div>
+    </header>
+
+    <!-- Article Content -->
+    <article class="article-container">
+        
+        <!-- Opening Section -->
+        <section class="content-section fade-in">
+            <p>Imagine you showed up to work and deliberately crashed your own company's servers during business hours? Sounds insane, right? Like showing up to work and randomly unplugging cables just to see what happens. Yet this is exactly what some of the world's most successful tech companies do on purpose, regularly, and with great success.</p>
+
+            <p>Welcome to the world of chaos engineering, where breaking things isn't vandalism - it's science. Where the question isn't "what if something goes wrong?" but rather "when it goes wrong, will we survive it?" In an era where a single minute of downtime can cost businesses over $5,000, and where our digital lives depend on impossibly complex systems with millions of moving parts, chaos engineering has become the unlikely hero in the fight for reliability. Chaos engineering involves intentionally breaking a system to identify its weaknesses. This is crucial in today's technological ecosystem, where complex systems such as distributed architectures and AI are common. The more complex the system, the more prone they are to break. While Netflix popularized chaos engineering in cloud systems, its importance has only grown as modern systems become more complex.</p>
+        </section>
+
+        <!-- Image Section - Left -->
+        <div class="image-left fade-in">
+            <div class="image-wrapper">
+                <img src="/media/Netflix-DVDs.webp" alt="Stack of Netflix DVDs in the early 2000s">
+                <figcaption>Modern distributed systems are inherently complex and vulnerable</figcaption>
+            </div>
+            <div class="text-content">
+                <h2>The Origin Story: From Netflix's Nightmare to Industry Standard</h2>
+                <p>In August of 2008, Netflix's primary database became corrupted and unusable. Nobody could put data in it or pull it out. This led to a 3-day outage and $3.2 million dollars in lost revenue (ThreadSafe Diaries, 2025). Now, as terrible as this sounds, this was in the 2000s where physical DVDs are being mailed. If this occurred today, the ramifications would be much greater. After this devastating outage occurred, Netflix bounced back and engineered the brilliant "Chaos Monkey"- a tool that intentionally terminates servers to test system resilience. After Netflix created Chaos Monkey, they decided to create a primate army, and orchestrated them to work together to shut down servers randomly every day. This allowed them to regularly sabotage their system and ensure it can self-heal and fully recover. Soon after Netflix started this campaign, other tech giants such as Google and Amazon followed suit.</p>
+            </div>
+        </div>
+
+        <!-- Center Image -->
+        <figure class="image-center fade-in">
+            <img src="/media/system-failure.png" alt="Illustration of system failure and recovery">
+            <figcaption>Netflix's Chaos Monkey pioneered the practice of controlled system failures</figcaption>
+        </figure>
+
+        <!-- What Is Chaos Engineering Section -->
+        <section class="content-section fade-in">
+            <h2>What Exactly Is Chaos Engineering?</h2>
+            
+            <p>At the core of chaos engineering is the ability to induce controlled failures and learn from it. This includes increasing latency, causing database crashes, inducing code errors, and more. This practice is commonly referred to as fault injection, where specific failures are deliberately introduced into a system to observe how it behaves under stress. From this idea, we can follow the process of the scientific method: hypothesis, experiment, observation, and analysis. This can provide engineers and analysts a structured and standardized way to test their systems at a large scale.</p>
+
+            <p>In traditional testing of systems, known problems are examined and exploited to ensure they don't occur. This confirms that all issues in the known world of technology are dealt with. Chaos engineering on the other hand, is about discovering the unknowns of systems. Instead of asking "does this do what is expected?", it asks "what actually happens when reality goes sideways?" This lens shift helps uncover edge cases that traditional testing might miss. When testing a system, there are 3 types of risks that can be revealed: Known-knowns, Known-unknowns, and Unknown-unknowns.</p>
+
+            <p>Known-known risks are revealed through confirming expected behavior with traditional testing, where a known problem is exploited and addressed, with the system's reaction being pre-determined and fixed in nature. Known-unknowns involve understanding unknown outcomes based on the known problem at hand. As you can probably guess, unknown-unknowns are intentionally breaking the system to uncover failure modes that weren't anticipated or known.</p>
+        </section>
+
+        <!-- Image Section - Right -->
+        <div class="image-right fade-in">
+            <div class="text-content">
+                <h2>Chaos Engineering in Today's Complex Systems</h2>
+                <p>In today's world, every piece of technology is extremely complex, and it's non-negotiable to have a robust recovery plan. Whether the system involves artificial intelligence, financial credibility, software delivery, or any other platform, it must be reliable.</p>
+                
+                <p>In the new AI frontier, agentic systems are experiencing unique and unseen challenges that have never been solved before. Joshua Owotogbe stated that AI's complex nature "presents additional challenges in real-world reliability testing, as unique production conditions, such as communication breakdowns, resource contention, or emerging agent behaviors, often lead to failures that traditional testing methods are less efficient in detecting" (2025, para. 1). Chaos engineering is an effective way to discover new problems and uncover opportunities for solutions. Without chaos engineering, the testing process would take significantly longer, and traditional testing might not catch all the issues that could arise. While it's crucial to fine-tune AI models to produce accurate results, it's just as, if not more important to fill gaps in security and stability in a standardized system, such as credit card fraud.</p>
+            </div>
+            <div class="image-wrapper">
+                <img src="/media/ai-under-stress.png" alt="AI and machine learning visualization with neural networks">
+                <figcaption>AI systems require unique approaches to reliability testing</figcaption>
+            </div>
+        </div>
+
+        <!-- Credit Card Section -->
+        <section class="content-section fade-in">
+            <p>Credit card fraud detection systems are crucial to any individual to protect your finances and data. Real-world fraud detection systems must operate under unpredictable conditions, where transaction numbers spike, networks slow down, or backend services die. Nagaraj et al. (2025) demonstrate how integrating chaos engineering and site reliability engineering (SRE) creates a production-ready fraud detection system that is both accurate and resilient. Their method combines real-time metrics monitoring and controlled fault injection to ensure the system is taking the necessary steps under stress. Nagaraj et al. (2025) also mentioned that their system achieves a high fraud detection accuracy of 99.64% while maintaining stable performance during chaos experiments such as network latency injection, database failures, and peak transaction loads. This allows financial institutions to uncover hidden weaknesses, prevent silent failures and ensure the system is always operating as intended. While integrating chaos engineering into a working system is great for testing existing reliability, but what about software still being written?</p>
+        </section>
+
+        <!-- DevOps Image Section - Left -->
+        <div class="image-left fade-in">
+            <div class="image-wrapper">
+                <img src="/media/devops-pipeline.png" alt="Software development and continuous integration pipeline">
+                <figcaption>DevOps practices benefit significantly from chaos engineering integration</figcaption>
+            </div>
+            <div class="text-content">
+                <p>DevOps is a software engineering culture and set of common practices that combines software development and IT operations to enable faster, more reliable, and continuous software development. However, adopting DevOps introduces a new set of challenges such as ensuring system reliability under frequent software changes. Arsecularatne and Wickramarachchi (2023) state that that chaos engineering can effectively address these challenges by proactively testing system resilience within DevOps environments. By once again injecting failures, teams can identify weaknesses in automation, metrics monitoring, and recovery mechanisms early in the software development pipeline. Integrating chaos engineering into software delivery improves performance by reducing system-wide failures, lowering recovery time, and increasing confidence that future software deployments won't turn your computer into a toaster! This allows the software testers to do more than rely solely on assumptions about the software's behavior. To understand how chaos engineering delivers these reliability gains in various systems, it's important to look at how chaos experiments are designed, executed, and iterated in practice.</p>
+            </div>
+        </div>
+
+        <!-- Process Section -->
+        <section class="content-section fade-in">
+            <h2>The Chaos Engineering Process</h2>
+            
+            <p>When deciding what a "chaos manager" will be doing to a system, you must define what the "steady state" for the system looks like. That is the baseline of your tests, also known as the control. Then, you must define your hypothesis. For example: If I increase the latency of my application by 150%, each user will experience a several second delay. From there, you will inject the failure based in the hypothesis (the independent variable). Then, you will monitor and observe the metrics and behavior of the system during the injection. Once the fault injection has completed, you can analyze the results of experiment. Any observations and theories can be put into improving the system and iterating a better, more resilient version of the system. The process can then be repeated as many times as needed. Now, you don't want to be all gung-ho and modify the 30-year-old code without any help. It's always a good idea to start small and scale over time. This reduces integration issues with the existing software and when issues do arise, they are easier to fix because small changes have made. At this point, we've covered how to break systems responsibly. Now let's talk about why doing so saves a business money, sanity, and a whole lot of late-night incident calls.</p>
+        </section>
+
+        <!-- Center Image 2 -->
+        <figure class="image-center fade-in">
+            <img src="/media/metrics-dashboard.png" alt="Data analytics dashboard showing system metrics">
+            <figcaption>Monitoring and analyzing system behavior during chaos experiments is crucial</figcaption>
+        </figure>
+
+        <!-- Benefits Section -->
+        <div class="image-right fade-in">
+            <div class="text-content">
+                <h2>Real-World Benefits and Business Impact</h2>
+                <p>Chaos engineering delivers real-world benefits by shifting from a firefighting mindset to a proactive approach to reliability. This reduces lost revenue during downtime and enhances customer experience. This application also improves Mean Time to Detect (MTTD) and Mean Time to Recover (MTTR) as engineers already understand failure points and the necessary recovery procedures. Over time, implementing chaos engineering will cultivate confidence within a business and allow failures to be viewed as opportunities to learn, rather than emergencies. From a financial perspective, chaos engineering can prevent costly outages, which for large businesses can average several hundred thousand dollars per hour. These chaos experiments can reveal fragile integrations that traditional testing often misses, ensuring problems are discovered internally rather than by the customer.</p>
+            </div>
+            <div class="image-wrapper">
+                <img src="/media/data-analyst.jpg" alt="Business analytics and financial dashboard">
+                <figcaption>Proactive chaos engineering prevents costly downtime and improves customer trust</figcaption>
+            </div>
+        </div>
+
+        <!-- Conclusion Section -->
+        <section class="content-section fade-in">
+            <h2>Conclusion: Embracing Controlled Chaos</h2>
+            
+            <p>At first glance, chaos engineering may seem counterintuitive, purposefully breaking systems to make them stronger, but its brilliance is hidden like a diamond in the rough. By proactively identifying points that can fail, businesses gain a digital age insurance policy. This allows a business to protect their revenue, customer experience, and operational reliability. This practice suggests starting small, learning from each experiment, and iterating towards more stable systems. In a world where things are inevitably going to break, chaos engineering allows businesses to face those problems on their own terms, rather than on their back foot. The question isn't whether or not chaos will strike, it's whether you'll be ready when it does.</p>
+        </section>
+
+        <!-- Author Card -->
+        <div class="author-card fade-in">
+            <img src="/media/JN.jpg" alt="Author Joshua Nelson" class="author-avatar">
+            <div class="author-info">
+                <h4>Joshua Nelson</h4>
+                <p>Technology writer specializing in DevOps, systems engineering, and resilience architecture. Passionate about making complex technical concepts accessible.</p>
+            </div>
+        </div>
+
+    </article>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2026 TechInsight. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Navigation scroll effect
+        const nav = document.getElementById('nav');
+        const progressBar = document.getElementById('progressBar');
+
+        window.addEventListener('scroll', function() {
+            // Nav background change
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+
+            // Progress bar
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            progressBar.style.width = scrollPercent + '%';
+        });
+
+        // Fade in on scroll
+        const fadeElements = document.querySelectorAll('.fade-in');
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const fadeObserver = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        fadeElements.forEach(function(element) {
+            fadeObserver.observe(element);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
