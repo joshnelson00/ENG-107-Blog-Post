@@ -318,12 +318,51 @@
             margin: 0;
         }
 
+        /* References Section */
+        .references-section {
+            background: var(--bg-secondary);
+            padding: 60px 40px;
+            margin-top: 80px;
+        }
+
+        .references-container {
+            max-width: 75%;
+            margin: 0 auto;
+        }
+
+        .references-container h2 {
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+
+        .reference-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .reference-item {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin: 0;
+            padding-left: 2em;
+            text-indent: -2em;
+        }
+
+        .reference-item em {
+            font-style: italic;
+        }
+
         /* Footer */
         .footer {
             background: var(--bg-secondary);
             padding: 48px 24px;
             text-align: center;
-            margin-top: 80px;
         }
 
         .footer p {
@@ -366,6 +405,10 @@
             .author-card {
                 max-width: 90%;
             }
+
+            .references-container {
+                max-width: 90%;
+            }
         }
 
         @media (max-width: 768px) {
@@ -395,6 +438,14 @@
             .author-card {
                 flex-direction: column;
                 text-align: center;
+            }
+
+            .references-container {
+                max-width: 100%;
+            }
+
+            .references-section {
+                padding: 40px 20px;
             }
         }
     </style>
@@ -544,6 +595,24 @@
         </div>
 
     </article>
+
+    <!-- References Section -->
+    <section class="references-section">
+        <div class="references-container">
+            <h2>References</h2>
+            <div class="reference-list">
+                <p class="reference-item">Arsecularatne, M., & Wickramarachchi, R. (2023). The Adoptability of Chaos Engineering with Devops to Stimulate the Software Delivery Performance: A Systematic Literature Review. <em>2023 IEEE 8th International Conference for Convergence in Technology (I2CT), Convergence in Technology (I2CT), 2023 IEEE 8th International Conference For</em>, 1–5. https://doi-org.lopes.idm.oclc.org/10.1109/I2CT57861.2023.10126414</p>
+                
+                <p class="reference-item">Nagaraj, P. B., Vallu, V. R., Chaluvadi, A., Pulakhandam, W., Kumar, P. M., & Antonidoss, A. (2025). Integrating MLOps, SRE, and Chaos Engineering for Scalable and Resilient Credit Card Fraud Detection Systems. <em>2025 3rd International Conference on Sustainable Computing and Data Communication Systems (ICSCDS), Sustainable Computing and Data Communication Systems (ICSCDS), 2025 3rd International Conference On</em>, 9–14. https://doi-org.lopes.idm.oclc.org/10.1109/ICSCDS65426.2025.11167755</p>
+                
+                <p class="reference-item">OpenAI. (2026). <em>Monkey destroying data centers</em> [AI-generated image]. DALL·E.</p>
+                
+                <p class="reference-item">Owotogbe, J. (2025). Assessing and Enhancing the Robustness of LLM-Based Multi-Agent Systems Through Chaos Engineering. <em>2025 IEEE/ACM 4th International Conference on AI Engineering – Software Engineering for AI (CAIN), AI Engineering – Software Engineering for AI (CAIN), 2025 IEEE/ACM 4th International Conference on, CAIN</em>, 250–252. https://doi-org.lopes.idm.oclc.org/10.1109/CAIN66642.2025.00039</p>
+                
+                <p class="reference-item">ThreadSafe Diaries. (2025, September 15). <em>The Night Netflix Almost Died</em>. Medium. https://medium.com/@ThreadSafeDiaries/the-night-netflix-almost-died-449fb0127b3d</p>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
